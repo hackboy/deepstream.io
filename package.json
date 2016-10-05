@@ -37,7 +37,7 @@
   "devDependencies": {
     "async": "^0.2.9",
     "coveralls": "^2.11.12",
-    "engine.io-client": "^1.6.11",
+    "engine.io-client": "^1.7.0",
     "grunt": "^1.0.1",
     "istanbul": "^0.4.4",
     "jasmine": "^2.5.2",
