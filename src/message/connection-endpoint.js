@@ -57,13 +57,15 @@ var ConnectionEndpoint = function( options, readyCallback ) {
 			// we provide a fake module to patch it if necassary, and look it up
 			// from libs incase of a binary deployment since it's a native module
 			var req = global && global.require ? global.require : require;
+			console.log( process.versions )
 			const uws = req( fileUtils.lookupLibRequirePath( 'uws' ) );
 
-			this._ws = new ( uws.Server ) ({
+			this._ws = new uws.Server({
 				server: this._server,
 				perMessageDeflate: false
 			} );
 		} catch( e ) {
+			console.log( e )
 			throw 'deepstream.io doesn\'t run on windows prior to node version 6.4';
 		}
 
@@ -77,9 +79,6 @@ var ConnectionEndpoint = function( options, readyCallback ) {
 		this._ws.on( 'connection', this._onConnection.bind( this, WS ) );
 	}
 
-
-	this._timeout = null;
-	this._msgNum = 0;
 	this._authenticatedSockets = [];
 };
 
@@ -158,11 +157,6 @@ ConnectionEndpoint.prototype.getTcpConnectionCount = function() {
 ConnectionEndpoint.prototype._closeWSServer = function() {
 	this._server.removeAllListeners( 'request' );
 	this._ws.removeAllListeners( 'connection' );
-	for( var wsClient in this._ws.clients ) {
-		if( this._ws.clients[ wsClient ].readyState !== READY_STATE_CLOSED ) {
-			this._ws.clients[ wsClient ].once( 'close', this._checkClosed.bind( this ) );
-		}
-	}
 	this._ws.close();
 
 	if( this._options.httpServer ) {
@@ -396,7 +390,7 @@ ConnectionEndpoint.prototype._sendInvalidAuthMsg = function( socketWrapper, msg 
  */
 ConnectionEndpoint.prototype._registerAuthenticatedSocket  = function( socketWrapper, userData ) {
 	socketWrapper.socket.removeListener( 'message', socketWrapper.authCallBack );
-	socketWrapper.socket.once( 'close', this._onSocketClose.bind( this, socketWrapper ) );
+	socketWrapper.once( 'close', this._onSocketClose.bind( this, socketWrapper ) );
 	socketWrapper.socket.on( 'message', function( msg ){ this.onMessage( socketWrapper, msg ); }.bind( this ));
 	this._appendDataToSocketWrapper( socketWrapper, userData );
 	if( typeof userData.clientData === 'undefined' ) {
